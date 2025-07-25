@@ -63,7 +63,7 @@ app.post("/verify/process", async (req, res) => {
         grant_type: "authorization_code",
         code: code,
         redirect_uri: REDIRECT_URI,
-        scope: "identify guilds.members.read", // Must match the scopes requested
+        scope: "identify guilds guilds.members.read", // Must match the scopes requested
       }).toString(),
     });
 
@@ -103,6 +103,8 @@ app.post("/verify/process", async (req, res) => {
       `User ${user.username}#${user.discriminator} (${user.id}) successfully identified.`
     );
 
+    console.log("user ==>", user);
+
     // Step 3: (Optional but Recommended) Verify if the user is in the target guild
     // This requires the 'guilds.members.read' scope and BOT_TOKEN with GuildMembers Intent
     const guildMemberResponse = await fetch(
@@ -127,6 +129,7 @@ app.post("/verify/process", async (req, res) => {
     }
 
     const guildMember = await guildMemberResponse.json();
+    console.log("guildMember ==>", guildMember);
     // Check if the user already has the verified role
     if (guildMember.roles && guildMember.roles.includes(VERIFIED_ROLE_ID)) {
       console.log(`User ${user.id} already has the verified role.`);
@@ -155,6 +158,28 @@ app.post("/verify/process", async (req, res) => {
       return res
         .status(assignRoleResponse.status)
         .json({ message: "Failed to assign role.", error: errorData });
+    }
+
+    const userGuildsResponse = await fetch(
+      `${DISCORD_API_BASE_URL}/users/@me/guilds`,
+      {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${access_token}`,
+        },
+      }
+    );
+
+    const userGuilds = await userGuildsResponse.json();
+    console.log("userGuilds ==>", userGuilds);
+
+    const userGuild = userGuilds.find((guild) => guild.id === GUILD_ID);
+    console.log("userGuild ==>", userGuild);
+    if (!userGuild) {
+      console.log(`User ${user.id} is not in guild ${GUILD_ID}.`);
+      return res.status(403).json({
+        message: "You must be a member of our Discord server to verify.",
+      });
     }
 
     console.log(
