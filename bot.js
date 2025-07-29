@@ -20,12 +20,12 @@ const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const GUILD_ID = process.env.GUILD_ID; // Your Discord Guild (Server) ID
 
 // Define the scopes needed for OAuth2 authorization
-const SCOPES = "identify guilds guilds.members.read"; // Permissions for the user to grant
+const SCOPE = process.env.SCOPE; // Permissions for the user to grant
 
 // Construct the OAuth2 URL for Discord authorization
 const OAUTH_AUTHORIZE_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(
   REDIRECT_URI
-)}&response_type=code&scope=${encodeURIComponent(SCOPES)}`;
+)}&response_type=code&scope=${encodeURIComponent(SCOPE)}`;
 
 // Create a new Discord client instance with necessary intents
 // IMPORTANT: Removed GatewayIntentBits.MessageContent as it's often the cause of "disallowed intents"
@@ -54,8 +54,6 @@ const commands = [
 client.once("ready", async () => {
   console.log(`Discord Bot logged in as ${client.user.tag}!`);
   console.log(`Verification URL: ${OAUTH_AUTHORIZE_URL}`);
-
-  console.log("client ==>", client);
 
   // Register slash commands globally or for a specific guild
   try {

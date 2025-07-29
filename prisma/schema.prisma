@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int           @id @default(autoincrement())
+  discordId     String        @unique      // Discord user ID (Snowflake)
+  username      String
+  discriminator String
+  email         String?       @unique
+  avatar        String?
+  verified      Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  memberships   UserGuild[]   // Guilds ที่ user เข้าร่วม
+}
+
+model Guild {
+  id          Int          @id @default(autoincrement())
+  discordId   String       @unique         // Discord guild ID (Snowflake)
+  name        String
+  icon        String?
+  banner      String?
+  ownerId     String                        // Discord user ID ของเจ้าของ
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  members     UserGuild[]
+  settings    GuildSettings?
+}
+
+model UserGuild {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  guildId     Int
+  isAdmin     Boolean   @default(false)  // สำหรับ dashboard permission
+  joinedAt    DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id])
+  guild       Guild     @relation(fields: [guildId], references: [id])
+
+  @@unique([userId, guildId])
+}
+
+model GuildSettings {
+  id         Int       @id @default(autoincrement())
+  guildId    Int       @unique
+  welcomeMsg String?
+  logChannel String?
+  enableLogs Boolean   @default(false)
+
+  guild      Guild     @relation(fields: [guildId], references: [id])
+}

@@ -1,0 +1,34 @@
+{
+  "avatar": null,
+  "banner": null,
+  "communication_disabled_until": null,
+  "flags": 0,
+  "joined_at": "2025-01-05T09:14:04.950000+00:00",
+  "nick": null,
+  "pending": false,
+  "premium_since": null,
+  "roles": [
+    "1397605307391410176",
+    "1325392110060568628"
+  ],
+  "unusual_dm_activity_until": null,
+  "user": {
+    "id": "1325390624807063634",
+    "username": "willy.1z",
+    "avatar": "7115a142639f0e5c0fb9f6ea5498bbd3",
+    "discriminator": "0",
+    "public_flags": 0,
+    "flags": 0,
+    "banner": null,
+    "accent_color": null,
+    "global_name": "WILLY",
+    "avatar_decoration_data": null,
+    "collectibles": null,
+    "display_name_styles": null,
+    "banner_color": null,
+    "clan": null,
+    "primary_guild": null
+  },
+  "mute": false,
+  "deaf": false
+}

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord OAuth2 Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+        <h1 class="text-2xl font-bold mb-6 text-center">Discord OAuth2 Test</h1>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Client ID:</label>
+                <input type="text" id="clientId" placeholder="Enter your Discord Client ID" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Redirect URI:</label>
+                <input type="text" id="redirectUri" value="http://localhost:3000/verify/callback" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Scope:</label>
+                <input type="text" id="scope" value="identify guilds guilds.members.read" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">State (optional):</label>
+                <input type="text" id="state" placeholder="Random state for security" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button onclick="generateRandomState()" 
+                        class="mt-1 text-sm text-blue-600 hover:text-blue-800">
+                    Generate Random State
+                </button>
+            </div>
+            
+            <button onclick="generateOAuthUrl()" 
+                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                Generate OAuth2 URL
+            </button>
+            
+            <div id="oauthUrl" class="hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-2">OAuth2 URL:</label>
+                <div class="bg-gray-100 p-3 rounded-md text-sm break-all" id="urlDisplay"></div>
+                <button onclick="openOAuthUrl()" 
+                        class="w-full mt-2 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    Open OAuth2 URL
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function generateRandomState() {
+            const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            document.getElementById('state').value = state;
+        }
+
+        function generateOAuthUrl() {
+            const clientId = document.getElementById('clientId').value;
+            const redirectUri = document.getElementById('redirectUri').value;
+            const scope = document.getElementById('scope').value;
+            const state = document.getElementById('state').value;
+            
+            if (!clientId) {
+                alert('Please enter your Client ID');
+                return;
+            }
+            
+            let oauthUrl = `https://discord.com/api/oauth2/authorize?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}`;
+            
+            if (state) {
+                oauthUrl += `&state=${encodeURIComponent(state)}`;
+            }
+            
+            document.getElementById('urlDisplay').textContent = oauthUrl;
+            document.getElementById('oauthUrl').classList.remove('hidden');
+        }
+        
+        function openOAuthUrl() {
+            const url = document.getElementById('urlDisplay').textContent;
+            window.open(url, '_blank');
+        }
+
+        // Auto-generate a random state when page loads
+        window.onload = function() {
+            generateRandomState();
+        };
+    </script>
+</body>
+</html> 

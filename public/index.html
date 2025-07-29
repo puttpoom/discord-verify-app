@@ -49,6 +49,15 @@
             color: #0c5460;
             border: 1px solid #bee5eb;
         }
+        .debug-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -58,6 +67,7 @@
             โปรดรอสักครู่ กำลังประมวลผลการยืนยัน Discord ของคุณ...
         </p>
         <div id="message" class="message-box hidden"></div>
+        <div id="debug" class="debug-info hidden"></div>
     </div>
 
     <script>
@@ -65,6 +75,8 @@
         // It will extract the 'code' from the URL and send it to your backend.
 
         const messageBox = document.getElementById('message');
+        const debugBox = document.getElementById('debug');
+        let isProcessing = false;
 
         // Function to display messages
         function showMessage(msg, type) {
@@ -73,50 +85,90 @@
             messageBox.classList.remove('hidden');
         }
 
+        // Function to show debug information
+        function showDebug(info) {
+            debugBox.innerHTML = `<strong>Debug Info:</strong><br>${info}`;
+            debugBox.classList.remove('hidden');
+        }
+
+        // Function to clean URL parameters
+        function cleanUrl() {
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
         // When the page loads, check for the 'code' parameter
         window.onload = async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const code = urlParams.get('code');
             const error = urlParams.get('error');
+            const state = urlParams.get('state');
+
+            // Show debug information
+            showDebug(`
+                Code present: ${code ? 'Yes' : 'No'}<br>
+                Error present: ${error ? 'Yes' : 'No'}<br>
+                State present: ${state ? 'Yes' : 'No'}<br>
+                Full URL: ${window.location.href}<br>
+                Timestamp: ${new Date().toISOString()}
+            `);
 
             if (error) {
                 showMessage(`Verification failed: ${error}. Please try again.`, 'error');
-                // Clean the URL parameters
-                window.history.replaceState({}, document.title, window.location.pathname);
+                cleanUrl();
                 return;
             }
 
-            if (code) {
-                showMessage('Processing Discord verification...', 'info');
-                // Clean the URL parameters
-                window.history.replaceState({}, document.title, window.location.pathname);
-
-                try {
-                    // Send the authorization code to your backend server
-                    // The backend will handle the token exchange and role assignment
-                    const response = await fetch('/verify/process', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ code: code }),
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok) {
-                        showMessage(`Verification successful! Welcome ${data.username}#${data.discriminator}. You have received the role.`, 'success');
-                    } else {
-                        showMessage(`Verification failed: ${data.message || 'An unknown error occurred.'}`, 'error');
-                    }
-                } catch (error) {
-                    console.error('Error during verification process:', error);
-                    showMessage(`An error occurred during verification: ${error.message}. Please try again.`, 'error');
-                }
-            } else {
-                // This case should ideally not happen if the user comes from Discord OAuth2.
-                // It means the page was accessed directly without an OAuth2 code.
+            if (!code) {
                 showMessage('No Discord authorization code found. Please start verification from Discord.', 'info');
+                cleanUrl();
+                return;
+            }
+
+            // Prevent multiple processing attempts
+            if (isProcessing) {
+                showMessage('Verification already in progress. Please wait...', 'info');
+                return;
+            }
+
+            isProcessing = true;
+            showMessage('Processing Discord verification...', 'info');
+
+            try {
+                // Clean the URL parameters immediately to prevent code reuse
+                cleanUrl();
+
+                console.log('Sending code to backend:', code.substring(0, 10) + '...');
+
+                // Send the authorization code to your backend server
+                const response = await fetch('/verify/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        code: code,
+                        state: state,
+                        timestamp: new Date().toISOString()
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(`Verification successful! Welcome ${data.username}#${data.discriminator}. You have received the role.`, 'success');
+                } else {
+                    showMessage(`Verification failed: ${data.message || 'An unknown error occurred.'}`, 'error');
+                    if (data.error) {
+                        showDebug(`Error details: ${JSON.stringify(data.error, null, 2)}`);
+                    }
+                }
+            } catch (error) {
+                console.error('Error during verification process:', error);
+                showMessage(`An error occurred during verification: ${error.message}. Please try again.`, 'error');
+            } finally {
+                isProcessing = false;
             }
         };
     </script>
